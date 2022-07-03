@@ -3,31 +3,31 @@ var questionIndex = 0;
 var score = 0;
 var timer = 30;
 var timerId = null;
-var questions = [
+var questionsArr = [
   {
     question: "What is the name of Ariel's crab companion in Little Mermaid?",
-    answers: ["Scar", "Sebastian", "Mushu", "Gaston"],
-    answerKey: "Sebastian",
+    options: ["Scar", "Sebastian", "Mushu", "Gaston"],
+    answer: "Sebastian",
   },
   {
     question: "What is Mickey's pet dog name?",
-    answers: ["Pete", "Pluto", "Goofy", "Mortimer"],
-    answerKey: "Pluto",
+    options: ["Pete", "Pluto", "Goofy", "Mortimer"],
+    answer: "Pluto",
   },
   {
     question: "Which Princess lost her glass slipper at midnight?",
-    answers: ["Aurora", "Snow White", "Moana", "Cinderella"],
-    answerKey: "Cinderella",
+    options: ["Aurora", "Snow White", "Moana", "Cinderella"],
+    answer: "Cinderella",
   },
   {
     question: "Who in Frozen likes warm hugs?",
-    answers: ["Elsa", "Sven", "Olaf", "Anna"],
-    answerKey: Olaf,
+    options: ["Elsa", "Sven", "Olaf", "Anna"],
+    answer: "Olaf",
   },
   {
     question: "A bite of what made Snow White fall into a deep sleep?",
-    answers: ["Apple", "Pear", "Cheeseburger", "Pie"],
-    answerKey: "Apple",
+    options: ["Apple", "Pear", "Cheeseburger", "Pie"],
+    answer: "Apple",
   },
 ];
 
@@ -35,12 +35,17 @@ function initializeGame() {
   score = 0;
   timer = 30;
   questionIndex = 0;
-  var gameText = document.createElement("p");
-  gameText.textContent = "Click start to start playing quiz";
-  var button = document.createElement("button");
-  button.textContent = "start!";
   quiz.innerHTML = "";
-  quiz.appendChild(gameText);
+  var prevScore = localStorage.getItem("previous-score");
+  if (prevScore || prevScore === 0) {
+    var gameText = document.createElement("p");
+    var scorePct = (prevScore / questionsArr.length) * 100;
+    gameText.textContent = `Previous Score: ${scorePct}%`;
+    quiz.appendChild(gameText);
+  }
+  var button = document.createElement("button");
+  button.setAttribute("id", "start-quiz");
+  button.textContent = "start!";
   quiz.appendChild(button);
   button.addEventListener("click", renderQuestion);
 }
@@ -54,6 +59,7 @@ function decrementTimer() {
     nextQuestion();
   }
   timerDisplay = document.querySelector(".timer");
+  if (timerDisplay === null) return;
   timerDisplay.textContent = timer;
 }
 
@@ -66,23 +72,19 @@ initializeGame();
 
 function renderQuestion() {
   quiz.innerHTML = "";
-  var questionSet = questions[questionIndex];
   var question = document.createElement("p");
   var timerDisplay = document.createElement("p");
-  var scoreDisplay = document.createElement("p");
-  scoreDisplay.textContent = score;
   timerDisplay.classList.add("timer");
   timer = 30;
   timerDisplay.textContent = timer;
-  question.textContent = questionSet.question;
-  quiz.appendChild(scoreDisplay);
+  question.textContent = questionsArr[questionIndex].question;
   quiz.appendChild(question);
-  quiz.appendChild(timerDisplay);
-  var answers = document.createElement("ol");
+  var answers = document.createElement("div");
   quiz.appendChild(answers);
-  for (var i = 0; i < questionSet.answers.length; i++) {
-    var answerChoice = document.createElement("li");
-    answerChoice.textContent = questionSet.answers[i];
+  quiz.appendChild(timerDisplay);
+  for (var i = 0; i < questionsArr[questionIndex].options.length; i++) {
+    var answerChoice = document.createElement("button");
+    answerChoice.textContent = questionsArr[questionIndex].options[i];
     answers.appendChild(answerChoice);
   }
   answers.addEventListener("click", handleUserChoice);
@@ -91,17 +93,15 @@ function renderQuestion() {
 }
 
 function gameOver() {
-  quiz.innerHMTL = "";
-  quiz.innerHTML = `<div>
-    <h2>Game Over!</h2>
-    <p>Your final score is ${score} out of ${questions.length}</p>
-  </div>`;
+  clearInterval(timerId);
+  localStorage.setItem("previous-score", score);
+  initializeGame();
 }
 
 function handleUserChoice(event) {
   var answerChoice = event.target;
-  var answerKey = questions[questionIndex].answerKey;
-  if (answerChoice.textContent === answerKey) {
+  var answer = questionsArr[questionIndex].answer;
+  if (answerChoice.textContent === answer) {
     console.log("Right answer!");
     score++;
   } else {
@@ -112,7 +112,7 @@ function handleUserChoice(event) {
 
 function nextQuestion() {
   questionIndex = questionIndex + 1;
-  if (questionIndex >= questions.length) {
+  if (questionIndex >= questionsArr.length) {
     // Game is over at this point
     return gameOver();
   }
